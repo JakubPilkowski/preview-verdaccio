@@ -1,5 +1,9 @@
 name: Build & Deploy Verdaccio to EC2
 
+permissions:
+  id-token: write
+  contents: read
+
 on:
   push:
     branches: [main]
