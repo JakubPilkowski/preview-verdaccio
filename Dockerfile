@@ -11,10 +11,6 @@ RUN npm install -g verdaccio
 RUN addgroup -g 10001 -S verdaccio && \
     adduser -u 10001 -S -G verdaccio -h /home/verdaccio verdaccio
 
-# Create storage directory
-RUN mkdir -p /verdaccio/storage && \
-    chown -R verdaccio:verdaccio /verdaccio
-
 # Copy Verdaccio configuration
 COPY config.yml /verdaccio/config.yml
 RUN chown verdaccio:verdaccio /verdaccio/config.yml
@@ -32,4 +28,5 @@ USER verdaccio
 WORKDIR /home/verdaccio
 
 # Run Verdaccio with PM2
-CMD ["pm2-runtime", "verdaccio"] 
+CMD ["pm2-runtime", "verdaccio", "--", "-c", "/verdaccio/config.yml"]
+

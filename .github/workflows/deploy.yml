@@ -1,0 +1,60 @@
+name: Build & Deploy Verdaccio to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: latest
+      ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+      ECR_REPOSITORY: ${{ secrets.WORKSPACE }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials for ECR push
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ECR_PUSH_ROLE_NAME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+      - name: Build Docker image
+        run: docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Tag and push Docker image to ECR
+        run: |
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  deploy-ssm:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials for SSM deploy
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.SSM_DEPLOY_ROLE_NAME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Verdaccio via SSM
+        run: |
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "${{ secrets.INSTANCE_ID }}" \
+            --comment "Deploy Verdaccio" \
+            --parameters commands='[
+              "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com",
+              "docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.WORKSPACE }}:latest",
+              "docker stop verdaccio || true",
+              "docker rm verdaccio || true",
+              "docker run -d -p 4873:4873 -v /home/ec2-user/verdaccio-storage:/verdaccio/storage --name verdaccio ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.WORKSPACE }}:latest"
+            ]' \
+            --region ${{ secrets.AWS_REGION }}
