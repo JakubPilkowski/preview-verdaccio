@@ -42,11 +42,13 @@ docker run -d \
 ### Using the registry
 
 1. **Add the registry to npm**:
+
    ```bash
    npm config set registry http://localhost:4873
    ```
 
 2. **Login to the registry**:
+
    ```bash
    npm login --registry http://localhost:4873
    ```
@@ -67,7 +69,7 @@ npm config set registry https://registry.npmjs.org/
 You can also use Docker Compose for easier management:
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   verdaccio:
     build: .
@@ -103,4 +105,4 @@ pm2-runtime verdaccio
 
 ## Security
 
-The container runs as a non-root user (`verdaccio`) for enhanced security. 
+The container runs as a non-root user (`verdaccio`) for enhanced security.

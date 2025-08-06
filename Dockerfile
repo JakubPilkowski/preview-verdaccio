@@ -15,6 +15,10 @@ RUN addgroup -g 10001 -S verdaccio && \
 RUN mkdir -p /verdaccio/storage && \
     chown -R verdaccio:verdaccio /verdaccio
 
+# Copy Verdaccio configuration
+COPY config.yml /verdaccio/config.yml
+RUN chown verdaccio:verdaccio /verdaccio/config.yml
+
 # Expose port 4873
 EXPOSE 4873
 
