@@ -60,10 +60,10 @@ jobs:
             --instance-ids "${{ secrets.INSTANCE_ID }}" \
             --comment "Deploy Verdaccio" \
             --parameters commands='[
-              "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY",
-              "docker pull $DOCKER_IMAGE",
+              "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com",
+              "docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.WORKSPACE }}/preview:latest",
               "docker stop verdaccio || true",
               "docker rm verdaccio || true",
-              "docker run -d -p 4873:4873 -v /home/ec2-user/verdaccio-storage:/verdaccio/storage --name verdaccio $DOCKER_IMAGE"
+              "docker run -d -p 4873:4873 -v /home/ec2-user/verdaccio-storage:/verdaccio/storage --name verdaccio ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.WORKSPACE }}/preview:latest"
             ]' \
             --region ${{ secrets.AWS_REGION }}
