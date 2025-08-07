@@ -27,6 +27,6 @@ USER verdaccio
 # Set working directory
 WORKDIR /home/verdaccio
 
-# Run Verdaccio with PM2
-CMD ["pm2-runtime", "verdaccio", "--", "-c", "/verdaccio/config.yml"]
+# Run Verdaccio with PM2, binding to all interfaces
+CMD ["pm2-runtime", "verdaccio", "--", "-c", "/verdaccio/config.yml", "-l", "0.0.0.0:4873"]
 
